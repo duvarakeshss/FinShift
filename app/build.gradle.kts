@@ -2,8 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-//    id("com.google.devtools.ksp")
-
+    id("com.google.devtools.ksp") version "2.0.21-1.0.27"
 }
 
 android {
@@ -42,7 +41,6 @@ android {
 }
 
 dependencies {
-    val room_version = "2.7.1"
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -51,12 +49,17 @@ dependencies {
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation("androidx.navigation:navigation-compose:2.9.0")
-    implementation("androidx.navigation:navigation-ui-ktx:2.9.0")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.9.0")
-//    ksp("androidx.room:room-compiler:$room_version")
-//
-//    implementation("androidx.room:room-runtime:$room_version")
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.navigation.ui.ktx)
+    implementation(libs.androidx.navigation.fragment.ktx)
+    val room_version = "2.7.1"
+
+    implementation("androidx.room:room-runtime:$room_version")
+
+    // If this project uses any Kotlin source, use Kotlin Symbol Processing (KSP)
+    // See Add the KSP plugin to your project
+    ksp("androidx.room:room-compiler:$room_version")
+
     implementation(libs.androidx.material3)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
