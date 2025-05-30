@@ -9,10 +9,29 @@ import androidx.navigation.compose.composable
 fun AppNavHost(navController: NavHostController) {
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
-            Login(onNavigateToSignup = { navController.navigate("signup") })
+            Login(
+                onNavigateToSignup = { navController.navigate("signup") },
+                onLoginSuccess = {
+                    navController.navigate("welcome") {
+                        popUpTo("login") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
         composable("signup") {
-            Signup(onNavigateBack = { navController.popBackStack() })
+            Signup(
+                onNavigateBack = { navController.popBackStack() },
+                onSignupSuccess = {
+                    navController.navigate("login") {
+                        popUpTo("login") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+        composable("welcome") {
+            WelcomeScreen()
         }
     }
 }

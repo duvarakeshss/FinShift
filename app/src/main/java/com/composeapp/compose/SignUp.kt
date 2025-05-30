@@ -25,15 +25,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.composeapp.compose.SignupViewModel
+import com.composeapp.compose.SignupState
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun SignupPreview() {
-    Signup(onNavigateBack = {})
+    Signup(onNavigateBack = {}, onSignupSuccess = {})
 }
 
 @Composable
-fun Signup(onNavigateBack: () -> Unit) {
+fun Signup(onNavigateBack: () -> Unit, onSignupSuccess: () -> Unit) {
     val keyboardVisible = isKeyboardVisible()
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -41,6 +44,30 @@ fun Signup(onNavigateBack: () -> Unit) {
     var passwordVisible by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }
     var dialogText by remember { mutableStateOf("") }
+
+    val signupViewModel: SignupViewModel = viewModel()
+    val signupState by signupViewModel.signupState.collectAsState()
+
+    // React to signup state changes
+    LaunchedEffect(signupState) {
+        when (signupState) {
+            is SignupState.Success -> {
+                // Only navigate on true success
+                onSignupSuccess()
+            }
+            is SignupState.Error -> {
+                dialogText = (signupState as SignupState.Error).message
+                showDialog = true
+                if ((signupState as SignupState.Error).message == "Username already exists") {
+                    username = ""
+                    email = ""
+                    password = ""
+                }
+                // Do NOT navigate on error
+            }
+            else -> {}
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -106,29 +133,29 @@ fun Signup(onNavigateBack: () -> Unit) {
             )
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+//        Spacer(modifier = Modifier.height(10.dp))
 
-        OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text(text = "Email") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Next,
-                keyboardType = KeyboardType.Email
-            ),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedTextColor = Color.White,
-                unfocusedTextColor = Color.White,
-                focusedIndicatorColor = Color.White,
-                unfocusedIndicatorColor = Color.Gray,
-                cursorColor = Color.White
-            )
-        )
+//        OutlinedTextField(
+//            value = email,
+//            onValueChange = { email = it },
+//            label = { Text(text = "Email") },
+//            modifier = Modifier.fillMaxWidth(),
+//            keyboardOptions = KeyboardOptions.Default.copy(
+//                imeAction = ImeAction.Next,
+//                keyboardType = KeyboardType.Email
+//            ),
+//            colors = TextFieldDefaults.colors(
+//                focusedContainerColor = Color.Transparent,
+//                unfocusedContainerColor = Color.Transparent,
+//                focusedTextColor = Color.White,
+//                unfocusedTextColor = Color.White,
+//                focusedIndicatorColor = Color.White,
+//                unfocusedIndicatorColor = Color.Gray,
+//                cursorColor = Color.White
+//            )
+//        )
 
-        Spacer(modifier = Modifier.height(10.dp))
+//        Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
             value = password,
@@ -169,18 +196,16 @@ fun Signup(onNavigateBack: () -> Unit) {
                         dialogText = "Please enter username"
                         showDialog = true
                     }
-                    email.isBlank() -> {
-                        dialogText = "Please enter email"
-                        showDialog = true
-                    }
+
                     password.isBlank() -> {
                         dialogText = "Please enter password"
                         showDialog = true
                     }
                     else -> {
+                        signupViewModel.signUp(username, password)
+                        showDialog = false
                         Log.d("SignupScreen", "Username: $username, Email: $email, Password: $password")
-                        dialogText = "Signup Successful"
-                        showDialog = true
+                        onSignupSuccess()
                     }
                 }
             },

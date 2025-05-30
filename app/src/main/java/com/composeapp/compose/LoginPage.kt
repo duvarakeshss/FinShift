@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.composeapp.compose.R
+import kotlinx.coroutines.launch
 
 @Composable
 fun isKeyboardVisible(): Boolean {
@@ -49,13 +51,17 @@ fun isKeyboardVisible(): Boolean {
 
 @Preview(showBackground = true)
 @Composable
-fun Login(onNavigateToSignup: () -> Unit = {}) {
+fun Login(onNavigateToSignup: () -> Unit = {}, onLoginSuccess: () -> Unit = {}) {
     val keyboardVisible = isKeyboardVisible()
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var showDialog by remember { mutableStateOf(false) }  // AlertDialog visibility state
     var dialogText by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+    val userModel = remember { MainApplication.getUserModel() }
+    val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -160,9 +166,17 @@ fun Login(onNavigateToSignup: () -> Unit = {}) {
                         showDialog = true
                     }
                     else -> {
-                        Log.d("LoginScreen", "Username: $username, Password: $password")
-                        dialogText = "Login Successful"
-                        showDialog = true
+                        coroutineScope.launch {
+                            val user = userModel.userDao.getUserByCredentials(username, password)
+                            if (user != null) {
+                                dialogText = "Login Successful"
+                                showDialog = false
+                                onLoginSuccess()
+                            } else {
+                                dialogText = "Invalid username or password"
+                                showDialog = true
+                            }
+                        }
                     }
                 }
             },
